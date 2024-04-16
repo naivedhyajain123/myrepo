@@ -1,0 +1,758 @@
+
+
+//caesar cipher
+
+def caesar_encrypt(plaintext, shift):
+    ciphertext = ""
+    for char in plaintext:
+        if char.isalpha():
+            shift_amount = shift % 26
+            if char.islower():
+                shifted = ord(char) + shift_amount
+                if shifted > ord('z'):
+                    shifted -= 26
+                ciphertext += chr(shifted)
+            elif char.isupper():
+                shifted = ord(char) + shift_amount
+                if shifted > ord('Z'):
+                    shifted -= 26
+                ciphertext += chr(shifted)
+        else:
+            ciphertext += char
+    return ciphertext
+
+def caesar_decrypt(ciphertext, shift):
+    plaintext = ""
+    for char in ciphertext:
+        if char.isalpha():
+            shift_amount = shift % 26
+            if char.islower():
+                shifted = ord(char) - shift_amount
+                if shifted < ord('a'):
+                    shifted += 26
+                plaintext += chr(shifted)
+            elif char.isupper():
+                shifted = ord(char) - shift_amount
+                if shifted < ord('A'):
+                    shifted += 26
+                plaintext += chr(shifted)
+        else:
+            plaintext += char
+    return plaintext
+
+# Example usage:
+plaintext = "Hello, World!"
+shift = 3
+encrypted_text = caesar_encrypt(plaintext, shift)
+print("Encrypted:", encrypted_text)
+
+decrypted_text = caesar_decrypt(encrypted_text, shift)
+print("Decrypted:", decrypted_text)
+
+
+
+
+// mono-alphabetic
+
+
+
+def generate_key(shift):
+    alphabet = "abcdefghijklmnopqrstuvwxyz"
+    shifted_alphabet = alphabet[shift:] + alphabet[:shift]
+    return {alphabet[i]: shifted_alphabet[i] for i in range(26)}
+
+def monoalphabetic_encrypt(plaintext, key):
+    encrypted_text = ""
+    for char in plaintext:
+        if char.isalpha():
+            if char.islower():
+                encrypted_text += key[char]
+            else:
+                encrypted_text += key[char.lower()].upper()
+        else:
+            encrypted_text += char
+    return encrypted_text
+
+def monoalphabetic_decrypt(ciphertext, key):
+    decrypted_text = ""
+    reversed_key = {v: k for k, v in key.items()}
+    for char in ciphertext:
+        if char.isalpha():
+            if char.islower():
+                decrypted_text += reversed_key[char]
+            else:
+                decrypted_text += reversed_key[char.lower()].upper()
+        else:
+            decrypted_text += char
+    return decrypted_text
+
+# Example usage:
+plaintext = "Hello, World!"
+shift = 3
+key = generate_key(shift)
+
+encrypted_text = monoalphabetic_encrypt(plaintext, key)
+print("Encrypted:", encrypted_text)
+
+decrypted_text = monoalphabetic_decrypt(encrypted_text, key)
+print("Decrypted:", decrypted_text)
+
+
+
+
+// hill cipher
+
+
+
+
+import numpy as np
+
+# Function to generate the key matrix
+def generate_key(key_str, matrix_size):
+    key_matrix = np.zeros((matrix_size, matrix_size), dtype=int)
+    index = 0
+    for i in range(matrix_size):
+        for j in range(matrix_size):
+            key_matrix[i][j] = ord(key_str[index]) % 65
+            index += 1
+    return key_matrix
+
+# Function to generate the inverse of a matrix modulo 26
+def mod_inv(matrix):
+    determinant = int(round(np.linalg.det(matrix)))
+    inverse_determinant = pow(determinant, -1, 26)
+    adjugate = np.round(np.linalg.inv(matrix) * determinant).astype(int)
+    inverse_matrix = (adjugate * inverse_determinant) % 26
+    return inverse_matrix
+
+# Function to encrypt a message
+def hill_encrypt(plaintext, key_str, matrix_size):
+    key_matrix = generate_key(key_str, matrix_size)
+    plaintext = plaintext.upper().replace(" ", "")
+    while len(plaintext) % matrix_size != 0:
+        plaintext += 'X'
+    ciphertext = ""
+    for i in range(0, len(plaintext), matrix_size):
+        block = np.array([ord(char) % 65 for char in plaintext[i:i+matrix_size]])
+        encrypted_block = np.dot(block, key_matrix) % 26
+        ciphertext += ''.join(chr(char + 65) for char in encrypted_block)
+    return ciphertext
+
+# Function to decrypt a message
+def hill_decrypt(ciphertext, key_str, matrix_size):
+    key_matrix = generate_key(key_str, matrix_size)
+    inverse_matrix = mod_inv(key_matrix)
+    decrypted_text = ""
+    for i in range(0, len(ciphertext), matrix_size):
+        block = np.array([ord(char) % 65 for char in ciphertext[i:i+matrix_size]])
+        decrypted_block = np.dot(block, inverse_matrix) % 26
+        decrypted_text += ''.join(chr(char + 65) for char in decrypted_block)
+    return decrypted_text
+
+# Example usage:
+plaintext = "HELLO"
+key = "GYBNQKURP"
+matrix_size = 3
+
+encrypted_text = hill_encrypt(plaintext, key, matrix_size)
+print("Encrypted:", encrypted_text)
+
+decrypted_text = hill_decrypt(encrypted_text, key, matrix_size)
+print("Decrypted:", decrypted_text)
+
+
+
+// POLY-alphabetic
+
+
+def vigenere_encrypt(plaintext, key):
+    plaintext = plaintext.upper()
+    key = key.upper()
+    ciphertext = ""
+    key_index = 0
+    for char in plaintext:
+        if char.isalpha():
+            shift = ord(key[key_index]) - 65
+            encrypted_char = chr(((ord(char) - 65 + shift) % 26) + 65)
+            ciphertext += encrypted_char
+            key_index = (key_index + 1) % len(key)
+        else:
+            ciphertext += char
+    return ciphertext
+
+def vigenere_decrypt(ciphertext, key):
+    ciphertext = ciphertext.upper()
+    key = key.upper()
+    plaintext = ""
+    key_index = 0
+    for char in ciphertext:
+        if char.isalpha():
+            shift = ord(key[key_index]) - 65
+            decrypted_char = chr(((ord(char) - 65 - shift) % 26) + 65)
+            plaintext += decrypted_char
+            key_index = (key_index + 1) % len(key)
+        else:
+            plaintext += char
+    return plaintext
+
+# Example usage:
+plaintext = "HELLO"
+key = "KEY"
+
+encrypted_text = vigenere_encrypt(plaintext, key)
+print("Encrypted:", encrypted_text)
+
+decrypted_text = vigenere_decrypt(encrypted_text, key)
+print("Decrypted:", decrypted_text)
+
+
+
+// playfair cipher
+
+
+def prepare_text(text):
+    text = text.upper().replace(" ", "")
+    # Replace 'J' with 'I' since Playfair doesn't include 'J'
+    text = text.replace("J", "I")
+    # Insert 'X' between repeated letters and at the end if the length is odd
+    text = [text[i] if text[i] != text[i + 1] else text[i] + 'X' for i in range(len(text) - 1)] + [text[-1]]
+    if len(text) % 2 != 0:
+        text.append('X')
+    return text
+
+def generate_key_square(key):
+    key = key.upper().replace("J", "I")
+    key = "".join(sorted(set(key), key=key.index))
+    key_square = [[0]*5 for _ in range(5)]
+    alphabet = "ABCDEFGHIKLMNOPQRSTUVWXYZ"  # Without 'J'
+    index = 0
+    for row in range(5):
+        for col in range(5):
+            if index < len(key):
+                key_square[row][col] = key[index]
+                index += 1
+            else:
+                while alphabet[index] in key:
+                    index += 1
+                key_square[row][col] = alphabet[index]
+                index += 1
+    return key_square
+
+def find_char(char, key_square):
+    for row in range(5):
+        for col in range(5):
+            if key_square[row][col] == char:
+                return row, col
+
+def playfair_encrypt(plaintext, key):
+    plaintext = prepare_text(plaintext)
+    key_square = generate_key_square(key)
+    ciphertext = ""
+    for i in range(0, len(plaintext), 2):
+        char1 = plaintext[i]
+        char2 = plaintext[i + 1]
+        row1, col1 = find_char(char1, key_square)
+        row2, col2 = find_char(char2, key_square)
+        if row1 == row2:
+            ciphertext += key_square[row1][(col1 + 1) % 5] + key_square[row2][(col2 + 1) % 5]
+        elif col1 == col2:
+            ciphertext += key_square[(row1 + 1) % 5][col1] + key_square[(row2 + 1) % 5][col2]
+        else:
+            ciphertext += key_square[row1][col2] + key_square[row2][col1]
+    return ciphertext
+
+def playfair_decrypt(ciphertext, key):
+    ciphertext = prepare_text(ciphertext)
+    key_square = generate_key_square(key)
+    plaintext = ""
+    for i in range(0, len(ciphertext), 2):
+        char1 = ciphertext[i]
+        char2 = ciphertext[i + 1]
+        row1, col1 = find_char(char1, key_square)
+        row2, col2 = find_char(char2, key_square)
+        if row1 == row2:
+            plaintext += key_square[row1][(col1 - 1) % 5] + key_square[row2][(col2 - 1) % 5]
+        elif col1 == col2:
+            plaintext += key_square[(row1 - 1) % 5][col1] + key_square[(row2 - 1) % 5][col2]
+        else:
+            plaintext += key_square[row1][col2] + key_square[row2][col1]
+    return plaintext
+
+# Example usage:
+plaintext = "HELLO"
+key = "KEYWORD"
+
+encrypted_text = playfair_encrypt(plaintext, key)
+print("Encrypted:", encrypted_text)
+
+decrypted_text = playfair_decrypt(encrypted_text, key)
+print("Decrypted:", decrypted_text)
+
+
+// rail-fence
+
+def rail_fence_encrypt(plaintext, rails):
+    # Create rails
+    fence = [['\n' for _ in range(len(plaintext))] for _ in range(rails)]
+    # Fill the fence
+    rail = 0
+    direction = -1
+    for char in plaintext:
+        fence[rail] += char
+        if rail == 0 or rail == rails - 1:
+            direction *= -1
+        rail += direction
+    # Flatten the fence
+    encrypted_text = ''.join(char for rail in fence for char in rail if char != '\n')
+    return encrypted_text
+
+def rail_fence_decrypt(ciphertext, rails):
+    # Create rails
+    fence = [['\n' for _ in range(len(ciphertext))] for _ in range(rails)]
+    # Fill the fence with placeholders
+    rail = 0
+    direction = -1
+    for i in range(len(ciphertext)):
+        fence[rail] += 'X'
+        if rail == 0 or rail == rails - 1:
+            direction *= -1
+        rail += direction
+    # Replace placeholders with ciphertext characters
+    index = 0
+    for rail in range(rails):
+        for col in range(len(ciphertext)):
+            if fence[rail][col] == 'X' and index < len(ciphertext):
+                fence[rail][col] = ciphertext[index]
+                index += 1
+    # Read the fence to get the plaintext
+    rail = 0
+    direction = -1
+    decrypted_text = ""
+    for col in range(len(ciphertext)):
+        decrypted_text += fence[rail][col]
+        if rail == 0 or rail == rails - 1:
+            direction *= -1
+        rail += direction
+    return decrypted_text
+
+# Example usage:
+plaintext = "HELLO"
+rails = 3
+
+encrypted_text = rail_fence_encrypt(plaintext, rails)
+print("Encrypted:", encrypted_text)
+
+decrypted_text = rail_fence_decrypt(encrypted_text, rails)
+print("Decrypted:", decrypted_text)
+
+
+//S-des
+
+
+# Initial permutation table
+IP = [2, 6, 3, 1, 4, 8, 5, 7]
+# Inverse initial permutation table
+IP_INV = [4, 1, 3, 5, 7, 2, 8, 6]
+# Expansion permutation table
+EP = [4, 1, 2, 3, 2, 3, 4, 1]
+# Permutation table
+P = [2, 4, 3, 1]
+
+# S-boxes
+S_BOXES = {
+    0: [[1, 0, 3, 2], [3, 2, 1, 0], [0, 2, 1, 3], [3, 1, 3, 2]],
+    1: [[0, 1, 2, 3], [2, 0, 1, 3], [3, 0, 1, 0], [2, 1, 0, 3]]
+}
+
+# P10 permutation table
+P10 = [3, 5, 2, 7, 4, 10, 1, 9, 8, 6]
+# P8 permutation table
+P8 = [6, 3, 7, 4, 8, 5, 10, 9]
+
+# Left shift table for key generation
+LS_TABLE = [1, 2]
+
+def permutation(input_bits, permutation_table):
+    return [input_bits[i - 1] for i in permutation_table]
+
+def left_shift(bits, n):
+    return bits[n:] + bits[:n]
+
+def key_generation(key):
+    key = permutation(key, P10)
+    key_halves = [key[:5], key[5:]]
+    round_keys = []
+    for i in range(2):
+        key_halves[0] = left_shift(key_halves[0], LS_TABLE[i])
+        key_halves[1] = left_shift(key_halves[1], LS_TABLE[i])
+        round_key = permutation(key_halves[0] + key_halves[1], P8)
+        round_keys.append(round_key)
+    return round_keys
+
+def xor(bits1, bits2):
+    return [b1 ^ b2 for b1, b2 in zip(bits1, bits2)]
+
+def substitution(bits, sbox):
+    row = int(bits[0]) * 2 + int(bits[3])
+    col = int(bits[1]) * 2 + int(bits[2])
+    return sbox[row][col]
+
+def f_function(bits, key):
+    expanded_bits = permutation(bits, EP)
+    xor_result = xor(expanded_bits, key)
+    sbox_input = [xor_result[:4], xor_result[4:]]
+    sbox_output = [substitution(sbox_input[0], S_BOXES[0]), substitution(sbox_input[1], S_BOXES[1])]
+    return permutation(sbox_output[0] + sbox_output[1], P)
+
+def sdes_encrypt(plaintext, key):
+    key = [int(k) for k in key]
+    round_keys = key_generation(key)
+    plaintext = [int(p) for p in plaintext]
+    plaintext = permutation(plaintext, IP)
+    left_half, right_half = plaintext[:4], plaintext[4:]
+    for i in range(2):
+        left_half, right_half = right_half, xor(left_half, f_function(right_half, round_keys[i]))
+    ciphertext = permutation(right_half + left_half, IP_INV)
+    return ''.join(str(bit) for bit in ciphertext)
+
+def sdes_decrypt(ciphertext, key):
+    key = [int(k) for k in key]
+    round_keys = key_generation(key)
+    ciphertext = [int(c) for c in ciphertext]
+    ciphertext = permutation(ciphertext, IP)
+    left_half, right_half = ciphertext[:4], ciphertext[4:]
+    for i in range(2):
+        left_half, right_half = right_half, xor(left_half, f_function(right_half, round_keys[1 - i]))
+    plaintext = permutation(right_half + left_half, IP_INV)
+    return ''.join(str(bit) for bit in plaintext)
+
+# Example usage:
+plaintext = "10101010"
+key = "1010101010"
+
+encrypted_text = sdes_encrypt(plaintext, key)
+print("Encrypted:", encrypted_text)
+
+decrypted_text = sdes_decrypt(encrypted_text, key)
+print("Decrypted:", decrypted_text)
+
+
+
+//RSA
+
+
+import random
+
+def gcd(a, b):
+    while b != 0:
+        a, b = b, a % b
+    return a
+
+def extended_gcd(a, b):
+    if a == 0:
+        return (b, 0, 1)
+    else:
+        gcd, x, y = extended_gcd(b % a, a)
+        return (gcd, y - (b // a) * x, x)
+
+def mod_inverse(a, m):
+    gcd, x, y = extended_gcd(a, m)
+    if gcd != 1:
+        raise Exception('Modular inverse does not exist')
+    else:
+        return x % m
+
+def is_prime(num, iterations=10):
+    if num <= 1:
+        return False
+    if num == 2 or num == 3:
+        return True
+    if num % 2 == 0:
+        return False
+
+    def check(a, s, d, n):
+        x = pow(a, d, n)
+        if x == 1:
+            return True
+        for i in range(s - 1):
+            if x == n - 1:
+                return True
+            x = pow(x, 2, n)
+        return x == n - 1
+
+    s = 0
+    d = num - 1
+    while d % 2 == 0:
+        d //= 2
+        s += 1
+
+    for _ in range(iterations):
+        a = random.randint(2, num - 1)
+        if not check(a, s, d, num):
+            return False
+    return True
+
+def generate_prime(bits):
+    while True:
+
+
+//diffi hellman
+
+import random
+
+# Large prime number
+def is_prime(num, iterations=10):
+    if num <= 1:
+        return False
+    if num == 2 or num == 3:
+        return True
+    if num % 2 == 0:
+        return False
+
+    def check(a, s, d, n):
+        x = pow(a, d, n)
+        if x == 1:
+            return True
+        for i in range(s - 1):
+            if x == n - 1:
+                return True
+            x = pow(x, 2, n)
+        return x == n - 1
+
+    s = 0
+    d = num - 1
+    while d % 2 == 0:
+        d //= 2
+        s += 1
+
+    for _ in range(iterations):
+        a = random.randint(2, num - 1)
+        if not check(a, s, d, num):
+            return False
+    return True
+
+def generate_prime(bits):
+    while True:
+        num = random.getrandbits(bits)
+        if is_prime(num):
+            return num
+
+def mod_inverse(a, m):
+    m0, x0, x1 = m, 0, 1
+    while a > 1:
+        q = a // m
+        m, a = a % m, m
+        x0, x1 = x1 - q * x0, x0
+    return x1 + m0 if x1 < 0 else x1
+
+def generate_keys(p, g, bits):
+    private_key = random.randint(2, p - 2)
+    public_key = pow(g, private_key, p)
+    return private_key, public_key
+
+def generate_shared_secret(private_key, other_public_key, p):
+    return pow(other_public_key, private_key, p)
+
+# Example usage:
+bits = 1024
+p = generate_prime(bits)
+g = random.randint(2, p - 1)
+
+alice_private_key, alice_public_key = generate_keys(p, g, bits)
+print("Alice's private key:", 
+
+
+
+//  digital signature
+
+
+import hashlib
+import random
+
+def gcd(a, b):
+    while b != 0:
+        a, b = b, a % b
+    return a
+
+def extended_gcd(a, b):
+    if a == 0:
+        return (b, 0, 1)
+    else:
+        gcd, x, y = extended_gcd(b % a, a)
+        return (gcd, y - (b // a) * x, x)
+
+def mod_inverse(a, m):
+    gcd, x, y = extended_gcd(a, m)
+    if gcd != 1:
+        raise Exception('Modular inverse does not exist')
+    else:
+        return x % m
+
+def generate_prime(bits):
+    while True:
+        num = random.getrandbits(bits)
+        if is_prime(num):
+            return num
+
+def is_prime(num, iterations=10):
+    if num <= 1:
+        return False
+    if num == 2 or num == 3:
+        return True
+    if num % 2 == 0:
+        return False
+
+    def check(a, s, d, n):
+        x = pow(a, d, n)
+        if x == 1:
+            return True
+        for i in range(s - 1):
+            if x == n - 1:
+                return True
+            x = pow(x, 2, n)
+        return x == n - 1
+
+    s = 0
+    d = num - 1
+    while d % 2 == 0:
+        d //= 2
+        s += 1
+
+    for _ in range(iterations):
+        a = random.randint(2, num - 1)
+        if not check(a, s, d, num):
+            return False
+    return True
+
+def generate_keypair(bits):
+    p = generate_prime(bits)
+    q = generate_prime(bits)
+    n = p * q
+    phi_n = (p - 1) * (q - 1)
+    e = random.randrange(1, phi_n)
+    while gcd(e, phi_n) != 1:
+        e = random.randrange(1, phi_n)
+    d = mod_inverse(e, phi_n)
+    return ((e, n), (d, n))
+
+def sign(message, private_key):
+    d, n = private_key
+    hashed_message = hashlib.sha256(message.encode()).hexdigest()
+    signature = pow(int(hashed_message, 16), d, n)
+    return signature
+
+def verify(message, signature, public_key):
+    e, n = public_key
+    hashed_message = hashlib.sha256(message.encode()).hexdigest()
+    hash_int = int(hashed_message, 16)
+    decrypted_hash = pow(signature, e, n)
+    return hash_int == decrypted_hash
+
+# Example usage:
+message = "This is a secret message"
+bits = 1024
+
+public_key, private_key = generate_keypair(bits)
+print("Public key:", public_key)
+print("Private key:", private_key)
+
+signature = sign(message, private_key)
+print("Signature:", signature)
+
+valid = verify(message, signature, public_key)
+print("Signature is valid:", valid)
+
+
+
+// cryptool
+
+
+
+from cryptography.fernet import Fernet
+
+key = Fernet.generate_key()
+cipher = Fernet(key)
+
+plaintext = b"Hello, Cryptool!"
+ciphertext = cipher.encrypt(plaintext)
+decrypted_text = cipher.decrypt(ciphertext)
+
+print("Ciphertext:", ciphertext)
+print("Decrypted text:", decrypted_text)
+
+
+
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives.asymmetric import rsa
+
+private_key = rsa.generate_private_key(
+    public_exponent=65537,
+    key_size=2048,
+    backend=default_backend()
+)
+public_key = private_key.public_key()
+
+message = b"Hello, Cryptool!"
+signature = private_key.sign(
+    message,
+    padding.PSS(
+        mgf=padding.MGF1(hashes.SHA256()),
+        salt_length=padding.PSS.MAX_LENGTH
+    ),
+    hashes.SHA256()
+)
+
+try:
+    public_key.verify(
+        signature,
+        message,
+        padding.PSS(
+            mgf=padding.MGF1(hashes.SHA256()),
+            salt_length=padding.PSS.MAX_LENGTH
+        ),
+        hashes.SHA256()
+    )
+    print("Signature is valid.")
+except:
+    print("Invalid signature.")
+
+
+
+
+
+import hashlib
+
+data = b"Hello, Cryptool!"
+hash_value = hashlib.sha256(data).hexdigest()
+
+print("SHA256 hash:", hash_value)
+
+
+
+// wireshark
+
+
+import subprocess
+import json
+
+def capture_packets(interface, count):
+    command = ["tshark", "-i", interface, "-c", str(count), "-T", "json"]
+    output = subprocess.run(command, capture_output=True, text=True)
+    return json.loads(output.stdout)
+
+def process_packets(packets):
+    for packet in packets:
+        # Process each packet here
+        print(packet)
+
+interface = "eth0"
+count = 10
+
+captured_packets = capture_packets(interface, count)
+process_packets(captured_packets)
+
+CNS PRACTICALS.txt
+Displaying CNS PRACTICALS.txt.
